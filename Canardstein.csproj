@@ -49,5 +49,13 @@
   <ItemGroup>
     <None Include="Resources\App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Irrlicht.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\irrKlang.NET4.dll" />
+    <Content Include="lib\IrrlichtLime.dll" />
+    <Content Include="lib\IrrlichtLime.xml" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
