@@ -41,6 +41,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Jeu.cs" />
@@ -56,7 +57,13 @@
     <Content Include="lib\irrKlang.NET4.dll" />
     <Content Include="lib\IrrlichtLime.dll" />
     <Content Include="lib\IrrlichtLime.xml" />
+    <Content Include="Textures\carte.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Textures\mur.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Textures\mur_deco.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Textures\plafond.png">
