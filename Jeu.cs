@@ -14,6 +14,8 @@ namespace Canardstein
 		private uint DerniereFrame = 0;
 		private bool K_Avant, K_Arriere, K_Gauche, K_Droite;
 		private Texture TextureMur, TextureMurDeco, TextureSol, TexturePlafond;
+		private bool[,] Murs = new bool[32, 32];
+
 
 		public Jeu()
 		{
@@ -36,18 +38,21 @@ namespace Canardstein
 					for (int y = 0; y < 32; y++)
 					{
 						System.Drawing.Color col = carte.GetPixel(x, y);
+						Murs[x, y] = false;
 
 						if ((col.R == 255) && (col.G == 255) && (col.B == 255))
 						{
 							SceneNode cube = Device.SceneManager.AddCubeSceneNode(1, null, 0, new Vector3Df(x, 0, y));
 							cube.SetMaterialFlag(MaterialFlag.Lighting, false);
 							cube.SetMaterialTexture(0, TextureMur);
+							Murs[x, y] = true;
 						}
 						else if ((col.R == 0) && (col.G == 0) && (col.B == 255))
 						{
 							SceneNode cube = Device.SceneManager.AddCubeSceneNode(1, null, 0, new Vector3Df(x, 0, y));
 							cube.SetMaterialFlag(MaterialFlag.Lighting, false);
 							cube.SetMaterialTexture(0, TextureMurDeco);
+							Murs[x, y] = true;
 						}
 					}
 			}
@@ -99,8 +104,9 @@ namespace Canardstein
 					vitesse.Z = -1;
 
 				vitesse = vitesse.Normalize() * tempsEcoule * 2;
-				camera.Position += vitesse;
-				camera.Target = camera.Position + new Vector3Df(1, 0, 0);
+
+				if (TenterMouvement(camera, vitesse) || TenterMouvement(camera, new Vector3Df(vitesse.X, 0, 0)) || TenterMouvement(camera, new Vector3Df(0, 0, vitesse.Z)))
+					camera.Target = camera.Position + new Vector3Df(1, 0, 0);
 
 				Device.VideoDriver.BeginScene(ClearBufferFlag.Color | ClearBufferFlag.Depth, IrrlichtLime.Video.Color.OpaqueMagenta);
 				Device.SceneManager.DrawAll();
@@ -121,6 +127,29 @@ namespace Canardstein
 				}
 			}
 			return false;
+		}
+
+		private bool TenterMouvement(SceneNode objet, Vector3Df direction, float rayon = .25f)
+		{
+			Vector2Df nouvellePosition = new Vector2Df(objet.Position.X + direction.X + .5f, objet.Position.Z + direction.Z + .5f);
+
+			int minX = (int)(nouvellePosition.X - rayon);
+			int maxX = (int)(nouvellePosition.X + rayon);
+
+			int minY = (int)(nouvellePosition.Y - rayon);
+			int maxY = (int)(nouvellePosition.Y + rayon);
+
+			int x, y;
+
+			for (x = minX; x <= maxX; x++)
+				for (y = minY; y <= maxY; y++)
+				{
+					if ((x < 0) || (y < 0) || (x >= 32) || (x >= 32)) return false;
+					if (Murs[x, y]) return false;
+				}
+
+			objet.Position += direction;
+			return true;
 		}
 	}
 }
