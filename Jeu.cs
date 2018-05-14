@@ -3,6 +3,8 @@ using IrrlichtLime.Core;
 using IrrlichtLime.Scene;
 using IrrlichtLime.Video;
 using System.Drawing;
+using System.Collections.Generic;
+using IrrKlang;
 
 namespace Canardstein
 {
@@ -15,7 +17,12 @@ namespace Canardstein
 		private bool K_Avant, K_Arriere, K_Gauche, K_Droite;
 		private Texture TextureMur, TextureMurDeco, TextureSol, TexturePlafond;
 		private bool[,] Murs = new bool[32, 32];
+		private Texture[] TexturePistolet = new Texture[3];
+		private int FramePistolet = 0;
+		private float ProchaineFramePistolet = 0.1f;
+		private ISoundEngine Audio;
 
+		private readonly List<IrrlichtLime.Video.Color> COULEUR_BLANC = new List<IrrlichtLime.Video.Color>(new IrrlichtLime.Video.Color[] { IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite });
 
 		public Jeu()
 		{
@@ -27,10 +34,16 @@ namespace Canardstein
 			Device.SetWindowCaption("Canardstein 3D");
 			Device.OnEvent += Evenement;
 
+			Audio = new ISoundEngine();
+
+			for (int i = 0; i < 3; i++)
+				TexturePistolet[i] = Device.VideoDriver.GetTexture(@"Textures\pistolet" + i.ToString() + ".png");
+
 			TextureMur = Device.VideoDriver.GetTexture(@"Textures\mur.png");
 			TextureMurDeco = Device.VideoDriver.GetTexture(@"Textures\mur_deco.png");
 			TextureSol = Device.VideoDriver.GetTexture(@"Textures\sol.png");
 			TexturePlafond = Device.VideoDriver.GetTexture(@"Textures\plafond.png");
+
 
 			using (Bitmap carte = (Bitmap)System.Drawing.Image.FromFile(@"Textures\carte.png"))
 			{
@@ -110,7 +123,21 @@ namespace Canardstein
 
 				Device.VideoDriver.BeginScene(ClearBufferFlag.Color | ClearBufferFlag.Depth, IrrlichtLime.Video.Color.OpaqueMagenta);
 				Device.SceneManager.DrawAll();
+
+				Device.VideoDriver.Draw2DImage(TexturePistolet[FramePistolet], new Recti(new Vector2Di(250, 300), new Dimension2Di(300, 300)), new Recti(0, 0, 512, 512), null, COULEUR_BLANC, true);
 				Device.VideoDriver.EndScene();
+
+				if (FramePistolet > 0)
+				{
+					ProchaineFramePistolet -= tempsEcoule;
+
+					if (ProchaineFramePistolet <= 0f)
+					{
+						FramePistolet++;
+						if (FramePistolet > 2) FramePistolet = 0;
+						ProchaineFramePistolet = 0.1f;
+					}
+				}
 			}
 		}
 
@@ -126,6 +153,17 @@ namespace Canardstein
 					case KeyCode.KeyD: K_Droite = e.Key.PressedDown; break;
 				}
 			}
+			else if (e.Type == EventType.Mouse)
+			{
+				if ((e.Mouse.Type == MouseEventType.LeftDown) && (FramePistolet == 0))
+				{
+					Audio.Play2D(@"Sound\pistolet.wav");
+					FramePistolet = 1;
+					ProchaineFramePistolet = 0.1f;
+				}
+			}
+
+
 			return false;
 		}
 
