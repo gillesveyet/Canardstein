@@ -103,7 +103,7 @@ namespace Canardstein
 
 			while (Device.Run())
 			{
-                AjouterChose(3, 3);
+                AjouterChose<Chose>(3, 3);
 
                 float tempsEcoule = (Device.Timer.Time - DerniereFrame) / 1000f;
 				DerniereFrame = Device.Timer.Time;
@@ -193,9 +193,9 @@ namespace Canardstein
 			return true;
 		}
 
-        private void AjouterChose(int x, int y)
+        private void AjouterChose<T>(int x, int y) where T : Chose, new()
         {
-            Chose nouvelleChose = new Chose();
+            T nouvelleChose = new T();
             nouvelleChose.Creer(this, x, y);
             Choses.Add(nouvelleChose);
         }
