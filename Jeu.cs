@@ -12,8 +12,10 @@ namespace Canardstein
 	{
 		private static void Main(string[] args) { Jeu jeu = new Jeu(); }
 
-		private IrrlichtDevice Device;
-		private uint DerniereFrame = 0;
+        public List<Chose> Choses = new List<Chose>();
+        public IrrlichtDevice Device;
+
+        private uint DerniereFrame = 0;
 		private bool K_Avant, K_Arriere, K_Gauche, K_Droite;
 		private Texture TextureMur, TextureMurDeco, TextureSol, TexturePlafond;
 		private bool[,] Murs = new bool[32, 32];
@@ -21,8 +23,7 @@ namespace Canardstein
 		private int FramePistolet = 0;
 		private float ProchaineFramePistolet = 0.1f;
 		private ISoundEngine Audio;
-
-		private readonly List<IrrlichtLime.Video.Color> COULEUR_BLANC = new List<IrrlichtLime.Video.Color>(new IrrlichtLime.Video.Color[] { IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite });
+        private readonly List<IrrlichtLime.Video.Color> COULEUR_BLANC = new List<IrrlichtLime.Video.Color>(new IrrlichtLime.Video.Color[] { IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite });
 
 		public Jeu()
 		{
@@ -102,7 +103,9 @@ namespace Canardstein
 
 			while (Device.Run())
 			{
-				float tempsEcoule = (Device.Timer.Time - DerniereFrame) / 1000f;
+                AjouterChose(3, 3);
+
+                float tempsEcoule = (Device.Timer.Time - DerniereFrame) / 1000f;
 				DerniereFrame = Device.Timer.Time;
 
 				Vector3Df vitesse = new Vector3Df();
@@ -189,6 +192,40 @@ namespace Canardstein
 			objet.Position += direction;
 			return true;
 		}
-	}
+
+        private void AjouterChose(int x, int y)
+        {
+            Chose nouvelleChose = new Chose();
+            nouvelleChose.Creer(this, x, y);
+            Choses.Add(nouvelleChose);
+        }
+    }
+
+    public class Chose
+    {
+        public bool Detruit { get; private set; } = false;
+        private BillboardSceneNode Sprite;
+        private Jeu Jeu;
+
+        public Vector2Df Position { get { return new Vector2Df(Sprite.Position.X, Sprite.Position.Z); } }
+
+        public void Creer(Jeu jeu, int x, int y)
+        {
+            Jeu = jeu;
+            Sprite = Jeu.Device.SceneManager.AddBillboardSceneNode(null);
+            Sprite.SetMaterialFlag(MaterialFlag.Lighting, false);
+            Sprite.SetMaterialType(MaterialType.TransparentAlphaChannel);
+            Sprite.SetSize(1, 1, 1);
+            Sprite.Position = new Vector3Df(x + 0.5f, 0, y + 0.5f);
+        }
+
+        public void Detruire()
+        {
+            if (!Detruit) return;
+            Sprite.Remove();
+            Detruit = true;
+        }
+    }
+
 }
 
