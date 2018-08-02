@@ -5,6 +5,7 @@ using IrrlichtLime.Video;
 using System.Drawing;
 using System.Collections.Generic;
 using IrrKlang;
+using System;
 
 namespace Canardstein
 {
@@ -17,6 +18,10 @@ namespace Canardstein
 
         private uint DerniereFrame = 0;
         private bool K_Avant, K_Arriere, K_Gauche, K_Droite;
+        private double Rotation = 0;
+        private Vector3Df VecteurAvant = new Vector3Df(1, 0, 0);
+        private Vector3Df VecteurDroite = new Vector3Df(0, 0, -1);
+
         private Texture TextureMur, TextureMurDeco, TextureSol, TexturePlafond;
         public Texture[] TextureGarde = new Texture[7];
         private bool[,] Murs = new bool[32, 32];
@@ -112,21 +117,32 @@ namespace Canardstein
                 float tempsEcoule = (Device.Timer.Time - DerniereFrame) / 1000f;
                 DerniereFrame = Device.Timer.Time;
 
+                if (Device.CursorControl.Position.X != 400)
+                {
+                    Rotation += (Device.CursorControl.Position.X - 400) * 0.0025;
+                    Device.CursorControl.Position = new Vector2Di(400, 300);
+                    VecteurAvant = new Vector3Df((float)Math.Cos(Rotation), 0, -(float)Math.Sin(Rotation));
+                    VecteurDroite = VecteurAvant;
+                    VecteurDroite.RotateXZby(-90);
+                }
+
+
                 for (int i = 0; i < Choses.Count; i++)
                     Choses[i].MiseAJour(tempsEcoule, camera);
 
-                Vector3Df vitesse = new Vector3Df();
 
+                Vector3Df vitesse = new Vector3Df();
                 if (K_Avant)
-                    vitesse.X = 1;
+                    vitesse += VecteurAvant;
                 else if (K_Arriere)
-                    vitesse.X = -1;
+                    vitesse -= VecteurAvant;
                 if (K_Gauche)
-                    vitesse.Z = 1;
+                    vitesse -= VecteurDroite;
                 else if (K_Droite)
-                    vitesse.Z = -1;
+                    vitesse += VecteurDroite;
 
                 vitesse = vitesse.Normalize() * tempsEcoule * 2;
+
 
                 if (TenterMouvement(camera, vitesse) || TenterMouvement(camera, new Vector3Df(vitesse.X, 0, 0)) || TenterMouvement(camera, new Vector3Df(0, 0, vitesse.Z)))
                     camera.Target = camera.Position + new Vector3Df(1, 0, 0);
@@ -168,6 +184,7 @@ namespace Canardstein
                 if ((e.Mouse.Type == MouseEventType.LeftDown) && (FramePistolet == 0))
                 {
                     Audio.Play2D(@"Sound\pistolet.wav");
+                    Tirer();
                     FramePistolet = 1;
                     ProchaineFramePistolet = 0.1f;
                 }
@@ -200,12 +217,37 @@ namespace Canardstein
             return true;
         }
 
+
+        private void Tirer()
+        {
+            Vector2Df pos = new Vector2Df(Device.SceneManager.ActiveCamera.Position.X, Device.SceneManager.ActiveCamera.Position.Z);
+            Vector2Df v = new Vector2Df(VecteurAvant.X, VecteurAvant.Z) * 0.1f;
+
+            //Console.WriteLine(pos);
+            //Console.WriteLine(v);
+
+            for (float f = 0; f < 128; f++)
+            {
+                for (int i = 0; i < Choses.Count; i++)
+                    if (Choses[i].Position.GetDistanceFrom(pos) < .25f)
+                    {
+                        Choses[i].InfligerDegats(5);
+                        return;
+                    }
+
+                pos += v;
+            }
+        }
+
+
         private void AjouterChose<T>(int x, int y) where T : Chose, new()
         {
             T nouvelleChose = new T();
             nouvelleChose.Creer(this, x, y);
             Choses.Add(nouvelleChose);
         }
+
+
     }
 
     public class Chose
@@ -234,26 +276,55 @@ namespace Canardstein
         }
 
         public virtual void MiseAJour(float tempsEcoule, CameraSceneNode camera) { }
+
+        public virtual void InfligerDegats(int degats) { }
     }
 
     public class Ennemi : Chose
     {
         private int Frame = 0;
         private float IntervalleFrame = 0.15f;
+        private int Vies = 10;
+        public override void InfligerDegats(int degats) { Vies -= degats; }
+
 
         public override void MiseAJour(float tempsEcoule, CameraSceneNode camera)
         {
-            Jeu.TenterMouvement(Sprite, (camera.Position - Sprite.Position) * tempsEcoule * .25f);
-            IntervalleFrame -= tempsEcoule;
-            if (IntervalleFrame < 0)
+            if (Vies <= 0)
             {
-                IntervalleFrame = 0.15f;
-                Frame++;
+                if (Frame < 4) Frame = 4;
 
-                if (Frame > 1) Frame = 0;
+                IntervalleFrame -= tempsEcoule;
 
-                Sprite.SetMaterialTexture(0, Jeu.TextureGarde[Frame]);
+                if (IntervalleFrame < 0)
+                {
+                    IntervalleFrame = 0.15f;
+                    Frame++;
+
+                    if (Frame > 6) Frame = 6;
+
+                    Sprite.SetMaterialTexture(0, Jeu.TextureGarde[Frame]);
+                }
             }
+            else
+            {
+                Jeu.TenterMouvement(Sprite, (camera.Position - Sprite.Position) * tempsEcoule * .25f);
+
+                IntervalleFrame -= tempsEcoule;
+
+                if (IntervalleFrame < 0)
+                {
+                    IntervalleFrame = 0.15f;
+                    Frame++;
+
+                    if (Frame > 1) Frame = 0;
+
+                    Sprite.SetMaterialTexture(0, Jeu.TextureGarde[Frame]);
+                }
+            }
+
+
+
         }
     }
 
