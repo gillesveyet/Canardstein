@@ -209,8 +209,11 @@ namespace Canardstein
             for (x = minX; x <= maxX; x++)
                 for (y = minY; y <= maxY; y++)
                 {
-                    if ((x < 0) || (y < 0) || (x >= 32) || (x >= 32)) return false;
-                    if (Murs[x, y]) return false;
+                    if (x < 0 || y < 0 || x >= 32 || y >= 32)
+                        return false;
+
+                    if (Murs[x, y])
+                        return false;
                 }
 
             objet.Position += direction;
