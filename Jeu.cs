@@ -28,8 +28,10 @@ namespace Canardstein
         private Texture[] TexturePistolet = new Texture[3];
         private int FramePistolet = 0;
         private float ProchaineFramePistolet = 0.1f;
-        private ISoundEngine Audio;
+        public ISoundEngine Audio;
         private readonly List<IrrlichtLime.Video.Color> COULEUR_BLANC = new List<IrrlichtLime.Video.Color>(new IrrlichtLime.Video.Color[] { IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite });
+
+        public int Vies = 100;
 
         public Jeu()
         {
@@ -145,7 +147,7 @@ namespace Canardstein
 
 
                 if (TenterMouvement(camera, vitesse) || TenterMouvement(camera, new Vector3Df(vitesse.X, 0, 0)) || TenterMouvement(camera, new Vector3Df(0, 0, vitesse.Z)))
-                    camera.Target = camera.Position + new Vector3Df(1, 0, 0);
+                    camera.Target = camera.Position + VecteurAvant;
 
                 Device.VideoDriver.BeginScene(ClearBufferFlag.Color | ClearBufferFlag.Depth, IrrlichtLime.Video.Color.OpaqueMagenta);
                 Device.SceneManager.DrawAll();
@@ -287,6 +289,7 @@ namespace Canardstein
     {
         private int Frame = 0;
         private float IntervalleFrame = 0.15f;
+        private float ProchaineAttaque = 1.5f;
         private int Vies = 10;
         public override void InfligerDegats(int degats) { Vies -= degats; }
 
@@ -298,37 +301,60 @@ namespace Canardstein
                 if (Frame < 4) Frame = 4;
 
                 IntervalleFrame -= tempsEcoule;
-
                 if (IntervalleFrame < 0)
                 {
                     IntervalleFrame = 0.15f;
                     Frame++;
-
                     if (Frame > 6) Frame = 6;
-
                     Sprite.SetMaterialTexture(0, Jeu.TextureGarde[Frame]);
                 }
             }
             else
             {
-                Jeu.TenterMouvement(Sprite, (camera.Position - Sprite.Position) * tempsEcoule * .25f);
-
                 IntervalleFrame -= tempsEcoule;
+                ProchaineAttaque -= tempsEcoule;
 
-                if (IntervalleFrame < 0)
+                if (ProchaineAttaque <= 0.0f)
                 {
-                    IntervalleFrame = 0.15f;
-                    Frame++;
+                    if (IntervalleFrame < 0)
+                    {
+                        if (Frame < 2) Frame = 2;
+                        else if (Frame == 2)
+                        {
+                            Attaquer();
+                            Frame = 3;
+                        }
+                        else
+                        {
+                            Frame = 0;
+                            ProchaineAttaque = 1.5f;
+                        }
+                        IntervalleFrame = 0.15f;
+                        Sprite.SetMaterialTexture(0, Jeu.TextureGarde[Frame]);
+                    }
+                }
+                else
+                {
+                    Jeu.TenterMouvement(Sprite, (camera.Position - Sprite.Position) * tempsEcoule * .25f);
 
-                    if (Frame > 1) Frame = 0;
-
-                    Sprite.SetMaterialTexture(0, Jeu.TextureGarde[Frame]);
+                    if (IntervalleFrame < 0)
+                    {
+                        IntervalleFrame = 0.15f;
+                        Frame++;
+                        if (Frame > 1) Frame = 0;
+                        Sprite.SetMaterialTexture(0, Jeu.TextureGarde[Frame]);
+                    }
                 }
             }
-
-
-
         }
+
+        private void Attaquer()
+        {
+            Jeu.Audio.Play2D(@"Sound\pistolet.wav");
+            Jeu.Vies -= 5;
+            Jeu.Device.SetWindowCaption("VIES: " + Jeu.Vies.ToString() + "%");
+        }
+
     }
 
 }
