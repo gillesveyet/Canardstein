@@ -236,7 +236,9 @@ namespace Canardstein
                 for (int i = 0; i < Choses.Count; i++)
                     if (Choses[i].Position.GetDistanceFrom(pos) < .25f)
                     {
-                        Choses[i].InfligerDegats(5);
+                        if (PeutVoir(Device.SceneManager.ActiveCamera, Choses[i].Sprite))
+                            Choses[i].InfligerDegats(5);
+
                         return;
                     }
 
@@ -244,6 +246,25 @@ namespace Canardstein
             }
         }
 
+        public bool PeutVoir(SceneNode objet1, SceneNode objet2)
+        {
+            Vector2Df pos = new Vector2Df(objet1.Position.X + .5f, objet1.Position.Z + .5f);
+            Vector2Df pos2 = new Vector2Df(objet2.Position.X + .5f, objet2.Position.Z + .5f);
+            float dist = pos.GetDistanceFrom(pos2);
+            Vector2Df v = (pos2 - pos).Normalize() * 0.1f;
+
+            for (float f = 0; f < dist; f += 0.1f)
+            {
+                Vector2Di posI = new Vector2Di((int)pos.X, (int)pos.Y);
+
+                if ((posI.X < 0) || (posI.Y < 0) || (posI.X >= 32) || (posI.Y >= 32)) return false;
+                if (Murs[posI.X, posI.Y]) return false;
+
+                pos += v;
+            }
+
+            return true;
+        }
 
         private void AjouterChose<T>(int x, int y) where T : Chose, new()
         {
@@ -258,7 +279,7 @@ namespace Canardstein
     public class Chose
     {
         public bool Detruit { get; private set; } = false;
-        protected BillboardSceneNode Sprite;
+        public BillboardSceneNode Sprite;
         protected Jeu Jeu;
 
         public Vector2Df Position { get { return new Vector2Df(Sprite.Position.X, Sprite.Position.Z); } }
@@ -316,6 +337,12 @@ namespace Canardstein
 
                 if (ProchaineAttaque <= 0.0f)
                 {
+                    if (!Jeu.PeutVoir(Sprite, camera))
+                    {
+                        ProchaineAttaque = 0.75f;
+                        return;
+                    }
+
                     if (IntervalleFrame < 0)
                     {
                         if (Frame < 2) Frame = 2;
