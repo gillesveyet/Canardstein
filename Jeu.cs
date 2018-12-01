@@ -15,6 +15,9 @@ namespace Canardstein
 
 		public List<Chose> Choses = new List<Chose>();
 		public IrrlichtDevice Device;
+		public Texture[] TextureGarde = new Texture[7];
+		public int Munitions = 50;
+		public float AlphaSang = 0;
 
 		private uint DerniereFrame = 0;
 		private bool K_Avant, K_Arriere, K_Gauche, K_Droite;
@@ -23,13 +26,12 @@ namespace Canardstein
 		private Vector3Df VecteurDroite = new Vector3Df(0, 0, -1);
 
 		private Texture TextureMur, TextureMurDeco, TextureSol, TexturePlafond;
-		public Texture[] TextureGarde = new Texture[7];
 		private bool[,] Murs = new bool[32, 32];
 		private Texture[] TexturePistolet = new Texture[3];
 		private Texture TexturePolice;
-		public int Munitions = 50;
 		private int FramePistolet = 0;
 		private float ProchaineFramePistolet = 0.1f;
+
 		public ISoundEngine Audio;
 		private readonly List<IrrlichtLime.Video.Color> COULEUR_BLANC = new List<IrrlichtLime.Video.Color>(new IrrlichtLime.Video.Color[] { IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite, IrrlichtLime.Video.Color.OpaqueWhite });
 
@@ -115,11 +117,19 @@ namespace Canardstein
 			camera.NearValue = 0.1f;
 
 			AjouterChose<Ennemi>(3, 3);
+			AjouterChose<Ennemi>(6, 12);
+			AjouterChose<Ennemi>(12, 12);
+			AjouterChose<Ennemi>(20, 6);
+			AjouterChose<Ennemi>(28, 16);
+			AjouterChose<Ennemi>(11, 27);
 
 			while (Device.Run())
 			{
 				float tempsEcoule = (Device.Timer.Time - DerniereFrame) / 1000f;
 				DerniereFrame = Device.Timer.Time;
+
+				if ((AlphaSang > 0) && (Vies > 0))
+					AlphaSang = Math.Max(0, AlphaSang - tempsEcoule * 500);
 
 				if (Device.CursorControl.Position.X != 400)
 				{
@@ -174,6 +184,9 @@ namespace Canardstein
 
 		private void DessinerHUD()
 		{
+			if (AlphaSang > 0)
+				Device.VideoDriver.Draw2DRectangle(new Recti(0, 0, 800, 600), new IrrlichtLime.Video.Color(255, 0, 0, (int)AlphaSang));
+
 			AfficherChiffre(0, 536, Vies);
 			AfficherChiffre(608, 536, Munitions);
 		}
@@ -195,6 +208,9 @@ namespace Canardstein
 
 		private bool Evenement(Event e)
 		{
+			if (Vies <= 0)
+				return false;
+
 			if (e.Type == EventType.Key)
 			{
 				switch (e.Key.Key)
@@ -341,6 +357,9 @@ namespace Canardstein
 
 		public override void MiseAJour(float tempsEcoule, CameraSceneNode camera)
 		{
+			if (Jeu.Vies <= 0)
+				return;
+
 			if (Vies <= 0)
 			{
 				if (Frame < 4) Frame = 4;
@@ -401,6 +420,7 @@ namespace Canardstein
 
 		private void Attaquer()
 		{
+			Jeu.AlphaSang = 255;
 			Jeu.Audio.Play2D(@"Sound\pistolet.wav");
 			Jeu.Vies -= 5;
 			Jeu.Device.SetWindowCaption("VIES: " + Jeu.Vies.ToString() + "%");
