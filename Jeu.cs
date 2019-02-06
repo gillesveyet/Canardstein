@@ -73,6 +73,7 @@ namespace Canardstein
 						{
 							SceneNode cube = Device.SceneManager.AddCubeSceneNode(1, null, 0, new Vector3Df(x, 0, y));
 							cube.SetMaterialFlag(MaterialFlag.Lighting, false);
+							cube.SetMaterialFlag(MaterialFlag.Fog, true);
 							cube.SetMaterialTexture(0, TextureMur);
 							Murs[x, y] = true;
 						}
@@ -80,6 +81,7 @@ namespace Canardstein
 						{
 							SceneNode cube = Device.SceneManager.AddCubeSceneNode(1, null, 0, new Vector3Df(x, 0, y));
 							cube.SetMaterialFlag(MaterialFlag.Lighting, false);
+							cube.SetMaterialFlag(MaterialFlag.Fog, true);
 							cube.SetMaterialTexture(0, TextureMurDeco);
 							Murs[x, y] = true;
 						}
@@ -100,12 +102,14 @@ namespace Canardstein
 			//ce sera utile dans la prochaine leçon).
 			MeshSceneNode sol = Device.SceneManager.AddMeshSceneNode(meshSol);
 			sol.SetMaterialFlag(MaterialFlag.Lighting, false);
+			sol.SetMaterialFlag(MaterialFlag.Fog, true);
 			sol.SetMaterialTexture(0, TextureSol);
 			sol.Position = new Vector3Df(15.5f, -0.5f, 15.5f);
 
 			//Pareil pour le plafond, sauf qu'on le place à une hauteur de 0,5 (et non de −0,5), et qu'on le pivote de 180 sur l'axe X pour le tourner vers le bas.
 			MeshSceneNode plafond = Device.SceneManager.AddMeshSceneNode(meshSol);
 			plafond.SetMaterialFlag(MaterialFlag.Lighting, false);
+			plafond.SetMaterialFlag(MaterialFlag.Fog, true);
 			plafond.SetMaterialTexture(0, TexturePlafond);
 			plafond.Position = new Vector3Df(15.5f, 0.5f, 15.5f);
 			plafond.Rotation = new Vector3Df(180, 0, 0);
@@ -123,6 +127,19 @@ namespace Canardstein
 			AjouterChose<Ennemi>(28, 16);
 			AjouterChose<Ennemi>(11, 27);
 
+			Device.VideoDriver.Fog = new Fog(new IrrlichtLime.Video.Color(138, 125, 81, 0), FogType.Linear, 0, 10);
+
+			ParticleSystemSceneNode part = Device.SceneManager.AddParticleSystemSceneNode(false, null, 0, new Vector3Df(29, -.5f, 30));
+			part.SetMaterialFlag(MaterialFlag.Lighting, false);
+			ParticleEmitter em = part.CreateBoxEmitter(
+				new AABBox(-.5f, 0, -.5f, .5f, 0, .5f),
+				new Vector3Df(0.0f, 0.0015f, 0.0f),
+				20, 24,
+				new IrrlichtLime.Video.Color(0, 128, 255, 0), new IrrlichtLime.Video.Color(0, 255, 255, 0),
+				800, 800, 0,
+				new Dimension2Df(0.005f, 0.04f), new Dimension2Df(0.01f, 0.08f));
+			part.Emitter = em;
+
 			while (Device.Run())
 			{
 				float tempsEcoule = (Device.Timer.Time - DerniereFrame) / 1000f;
@@ -130,6 +147,9 @@ namespace Canardstein
 
 				if ((AlphaSang > 0) && (Vies > 0))
 					AlphaSang = Math.Max(0, AlphaSang - tempsEcoule * 500);
+
+
+				if (((int)camera.Position.X == 29) && ((int)camera.Position.Z == 30)) Device.Close();
 
 				if (Device.CursorControl.Position.X != 400)
 				{
@@ -329,6 +349,7 @@ namespace Canardstein
 			Jeu = jeu;
 			Sprite = Jeu.Device.SceneManager.AddBillboardSceneNode(null);
 			Sprite.SetMaterialFlag(MaterialFlag.Lighting, false);
+			Sprite.SetMaterialFlag(MaterialFlag.Fog, true);
 			Sprite.SetMaterialType(MaterialType.TransparentAlphaChannel);
 			Sprite.SetSize(1, 1, 1);
 			Sprite.Position = new Vector3Df(x + 0.5f, 0, y + 0.5f);
